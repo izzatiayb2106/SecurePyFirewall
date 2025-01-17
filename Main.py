@@ -1,11 +1,11 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                            QPushButton, QLabel, QStackedWidget, QFrame)
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QFont, QPalette, QColor
-from PacketSniffer import create_sniffer_page
-from AccessControl import create_access_control_page
-from Analysis import create_analysis_page
+                            QPushButton, QLabel, QStackedWidget)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from PacketSniffer import SnifferPage  # Import the SnifferPage class
+from LogMonitor import LogMonitorPage  # Import the LogMonitorPage class
+from Analysis import AnalysisPage # Import the AnalysisPage class
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -22,9 +22,9 @@ class MainWindow(QMainWindow):
         
         # Create pages
         self.main_menu = self.create_main_menu()
-        self.sniffer_page = self.create_sniffer_page()
-        self.access_control_page = self.create_access_control_page()
-        self.analysis_page = self.create_analysis_page()
+        self.sniffer_page = SnifferPage(self)  # Pass self as parent
+        self.access_control_page = LogMonitorPage(self) #pass self as parent 
+        self.analysis_page = AnalysisPage(self) #pass self as parent
         
         # Add pages to stacked widget
         self.stacked_widget.addWidget(self.main_menu)
@@ -67,8 +67,8 @@ class MainWindow(QMainWindow):
         
         # Buttons
         buttons = [
-            ("Packet Sniffer", lambda: self.stacked_widget.setCurrentIndex(1)),
-            ("Access Control", lambda: self.stacked_widget.setCurrentIndex(2)),
+            ("Packet Analysis", lambda: self.stacked_widget.setCurrentIndex(1)),
+            ("Log Monitoring", lambda: self.stacked_widget.setCurrentIndex(2)),
             ("Analysis", lambda: self.stacked_widget.setCurrentIndex(3)),
             ("Exit", self.close)
         ]
@@ -79,45 +79,12 @@ class MainWindow(QMainWindow):
             button.setCursor(Qt.CursorShape.PointingHandCursor)
             button.clicked.connect(callback)
             layout.addWidget(button)
-            # Add some spacing between buttons
             layout.addSpacing(15)
         
         page.setLayout(layout)
         return page
 
-    def create_sniffer_page(self):
-        # Placeholder for sniffer page
-        page = QWidget()
-        layout = QVBoxLayout()
-        
-        title = QLabel("Packet Sniffer")
-        title.setFont(QFont("Inter", 24, QFont.Weight.Bold))
-        title.setStyleSheet("color: #2E2E2E;")
-        layout.addWidget(title)
-        
-        back_button = QPushButton("Back to Main Menu")
-        back_button.setStyleSheet("""
-            QPushButton {
-                background-color: #4A4A4A;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                font-family: Inter;
-                font-weight: bold;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #2E2E2E;
-            }
-        """)
-        back_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
-        layout.addWidget(back_button)
-        
-        page.setLayout(layout)
-        return page
-
     def create_access_control_page(self):
-        # Placeholder for access control page
         page = QWidget()
         layout = QVBoxLayout()
         
@@ -148,7 +115,6 @@ class MainWindow(QMainWindow):
         return page
 
     def create_analysis_page(self):
-        # Placeholder for analysis page
         page = QWidget()
         layout = QVBoxLayout()
         
@@ -180,8 +146,6 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-    
-    # Set application-wide font
     app.setFont(QFont("Inter", 10))
     
     window = MainWindow()

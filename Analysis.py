@@ -1,78 +1,95 @@
-import tkinter as tk
-from tkinter import ttk
+import sys
+from PyQt6.QtWidgets import (
+    QFrame, QLabel, QPushButton, QVBoxLayout, 
+    QTextEdit, QWidget, QSpacerItem, QSizePolicy,
+    QApplication  # Add this import
+)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QPalette, QColor
 
-def create_analysis_page(root, show_frame, main_menu_frame):
-    analysis_frame = ttk.Frame(root)
-    analysis_frame.configure(style="TFrame")
+class AnalysisPage(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.main_window = parent
+        self.setup_ui()
 
-    # Header with modern styling
-    header = ttk.Label(
-        analysis_frame,
-        text="Packet Analysis",
-        style="Title.TLabel"
-    )
-    header.pack(pady=40)
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(20)
+        layout.setContentsMargins(40, 40, 40, 40)
 
-    def analyze_packets():
-        display_text.insert(tk.END, "Analyzing packets... (Placeholder for analysis logic)\n")
+        # Header
+        header = QLabel("Packet Analysis")
+        header_font = QFont("Inter", 24, QFont.Weight.Bold)
+        header.setFont(header_font)
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(header)
 
-    # Button container for better organization
-    button_frame = ttk.Frame(analysis_frame)
-    button_frame.pack(pady=20)
+        # Text display area
+        self.display_text = QTextEdit()
+        self.display_text.setFont(QFont("Inter", 12))
+        self.display_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #FFFFFF;
+                color: #2E2E2E;
+                border: 1px solid #CCCCCC;
+                padding: 15px;
+                border-radius: 5px;
+            }
+        """)
+        layout.addWidget(self.display_text)
 
-    # Analyze button with modern styling
-    analyze_btn = tk.Button(
-        button_frame,
-        text="Start Analysis",
-        command=analyze_packets,
-        font=("Inter", 14, "bold"),
-        bg="#4A4A4A",
-        fg="white",
-        padx=30,
-        pady=15,
-        relief="flat",
-        cursor="hand2",
-        borderwidth=0,
-        activebackground="#2E2E2E",
-        activeforeground="white"
-    )
-    analyze_btn.pack(pady=10)
+        # Analyze button
+        analyze_btn = QPushButton("Start Analysis")
+        analyze_btn.setStyleSheet(self.get_button_style())
+        analyze_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        analyze_btn.clicked.connect(self.analyze_packets)
+        layout.addWidget(analyze_btn)
 
-    # Modern text display area
-    display_text = tk.Text(
-        analysis_frame,
-        wrap="word",
-        font=("Inter", 12),
-        bg="#FFFFFF",
-        fg="#2E2E2E",
-        padx=15,
-        pady=15,
-        relief="flat",
-        borderwidth=1
-    )
-    display_text.pack(fill="both", expand=True, padx=40, pady=20)
+        # Back button
+        back_btn = QPushButton("Back")
+        back_btn.setStyleSheet(self.get_button_style())
+        back_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        back_btn.clicked.connect(self.go_back)
+        layout.addWidget(back_btn)
 
-    # Back button with modern styling
-    back_btn = tk.Button(
-        button_frame,
-        text="Back",
-        command=lambda: show_frame(main_menu_frame),
-        font=("Inter", 14, "bold"),
-        bg="#4A4A4A",
-        fg="white",
-        padx=30,
-        pady=15,
-        relief="flat",
-        cursor="hand2",
-        borderwidth=0,
-        activebackground="#2E2E2E",
-        activeforeground="white"
-    )
-    back_btn.pack(pady=10)
+        # Add spacing
+        layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
-    # Add hover effects to buttons
-    for btn in (analyze_btn, back_btn):
-        btn.bind("<Enter>", lambda e, btn=btn: btn.configure(bg="#2E2E2E"))
-        btn.bind("<Leave>", lambda e, btn=btn: btn.configure(bg="#4A4A4A"))
+    def get_button_style(self):
+        return """
+            QPushButton {
+                background-color: #4A4A4A;
+                color: white;
+                border: none;
+                padding: 15px 30px;
+                border-radius: 5px;
+                font-family: 'Inter';
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2E2E2E;
+            }
+            QPushButton:pressed {
+                background-color: #1A1A1A;
+            }
+        """
 
-    return analysis_frame
+    def analyze_packets(self):
+        self.display_text.append("Analyzing packets... (Placeholder for analysis logic)")
+
+    def go_back(self):
+        if self.main_window and hasattr(self.main_window, 'stacked_widget'):
+            self.main_window.stacked_widget.setCurrentIndex(0)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setFont(QFont("Inter", 10))
+    
+    window = AnalysisPage()
+    window.setStyleSheet("background-color: #D8C4B6;")
+    window.resize(900, 600)
+    window.show()
+    
+    sys.exit(app.exec())

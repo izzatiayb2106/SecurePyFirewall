@@ -48,21 +48,16 @@ class AnalysisPage(QWidget):
         # Grid Layout for Cards
         grid_layout = QGridLayout()
         grid_layout.setSpacing(20)
-        
-        # Set column stretch factors
-        grid_layout.setColumnStretch(0, 30)  # Protocol Distribution
-        grid_layout.setColumnStretch(1, 45)  # Port Distribution
-        grid_layout.setColumnStretch(2, 25)  # Analysis Results
 
-        # Protocol Distribution Card (Smaller)
+        # Protocol Distribution Card
         protocol_card = CustomCard("Protocol Distribution")
-        self.protocol_fig = Figure(figsize=(4, 4), dpi=100, facecolor='#FFFFFF')
+        self.protocol_fig = Figure(figsize=(6, 4), dpi=100, facecolor='#FFFFFF')
         self.protocol_canvas = FigureCanvas(self.protocol_fig)
         self.protocol_ax = self.protocol_fig.add_subplot(111)
         protocol_card.layout.addWidget(self.protocol_canvas)
         grid_layout.addWidget(protocol_card, 0, 0)
 
-        # Port Distribution Card (Same size)
+        # Port Distribution Card
         port_card = CustomCard("Port Distribution")
         self.port_fig = Figure(figsize=(6, 4), dpi=100, facecolor='#FFFFFF')
         self.port_canvas = FigureCanvas(self.port_fig)
@@ -70,26 +65,18 @@ class AnalysisPage(QWidget):
         port_card.layout.addWidget(self.port_canvas)
         grid_layout.addWidget(port_card, 0, 1)
 
-        # Status Card (Larger)
+        # Status Card
         status_card = CustomCard("Analysis Results")
-        status_card.setMinimumWidth(300)  # Ensure minimum width
         
-        # Add more spacing in the status card
-        status_card.layout.setSpacing(25)
-        
-        # Anomaly Status with larger font
+        # Anomaly Status
         self.anomaly_label = QLabel("No Anomalies Detected")
         self.anomaly_label.setObjectName("statusLabel")
-        self.anomaly_label.setFont(QFont("Segoe UI", 14))
+        self.anomaly_label.setFont(QFont("Segoe UI", 12))
         status_card.layout.addWidget(self.anomaly_label)
 
-        # Add spacer for better vertical distribution
-        status_card.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
-
-        # Statistics Grid with larger spacing
+        # Statistics Grid
         stats_grid = QGridLayout()
-        stats_grid.setSpacing(20)
-        stats_grid.setVerticalSpacing(30)
+        stats_grid.setSpacing(15)
 
         # Allowed Packets
         allowed_label = QLabel("Allowed Packets")
@@ -108,30 +95,24 @@ class AnalysisPage(QWidget):
         stats_grid.addWidget(self.denied_count, 1, 1)
 
         status_card.layout.addLayout(stats_grid)
-        
-        # Add bottom spacer
-        status_card.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
-        
         grid_layout.addWidget(status_card, 0, 2)
 
         main_layout.addLayout(grid_layout)
 
         # Buttons Container
         button_container = QHBoxLayout()
-        button_container.setSpacing(20)
+        button_container.setSpacing(15)
 
         # Analyze Button
         analyze_btn = QPushButton("Start Analysis")
         analyze_btn.setObjectName("primaryButton")
-        analyze_btn.setFixedHeight(45)
         analyze_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         analyze_btn.clicked.connect(self.analyze_packets)
         button_container.addWidget(analyze_btn)
 
         # Back Button
         back_btn = QPushButton("Back to Main Menu")
-        back_btn.setObjectName("primaryButton")
-        back_btn.setFixedHeight(45)
+        back_btn.setObjectName("secondaryButton")
         back_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         back_btn.clicked.connect(self.go_back)
         button_container.addWidget(back_btn)

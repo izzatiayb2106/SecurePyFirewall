@@ -23,7 +23,7 @@ class PacketCaptureThread(QThread):
     def run(self):
         try:
             packets = sniff(iface="Wi-Fi", prn=self.process_packet, 
-                          stop_filter=lambda _: not self.running)
+                stop_filter=lambda _: not self.running)
             self.capture_complete.emit(len(packets))
         except Exception as e:
             self.packet_received.emit(f"Error starting capture: {str(e)}\n")

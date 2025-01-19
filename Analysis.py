@@ -1,83 +1,309 @@
 import sys
 from PyQt6.QtWidgets import (
-    QFrame, QLabel, QPushButton, QVBoxLayout, 
-    QTextEdit, QWidget, QSpacerItem, QSizePolicy,
-    QApplication  # Add this import
+    QFrame, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
+    QWidget, QSpacerItem, QSizePolicy, QApplication, QGridLayout
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QPalette, QColor
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import numpy as np
+from LogMonitor import LogMonitorPage
+
+class CustomCard(QFrame):
+    def __init__(self, title, parent=None):
+        super().__init__(parent)
+        self.setObjectName("customCard")
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(20, 20, 20, 20)
+        self.layout.setSpacing(15)
+        
+        # Card Title
+        self.title = QLabel(title)
+        self.title.setObjectName("cardTitle")
+        self.title.setFont(QFont("Segoe UI", 14, QFont.Weight.DemiBold))
+        self.layout.addWidget(self.title)
 
 class AnalysisPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.main_window = parent
         self.setup_ui()
+        self.apply_styles()
 
     def setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(40, 40, 40, 40)
+        # Main Layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(25)
+        main_layout.setContentsMargins(30, 30, 30, 30)
 
         # Header
-        header = QLabel("Packet Analysis")
-        header_font = QFont("Inter", 24, QFont.Weight.Bold)
-        header.setFont(header_font)
+        header = QLabel("Network Traffic Analysis")
+        header.setObjectName("pageHeader")
+        header.setFont(QFont("Segoe UI", 28, QFont.Weight.Bold))
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(header)
+        main_layout.addWidget(header)
 
-        # Text display area
-        self.display_text = QTextEdit()
-        self.display_text.setFont(QFont("Inter", 12))
-        self.display_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #FFFFFF;
-                color: #2E2E2E;
-                border: 1px solid #CCCCCC;
-                padding: 15px;
-                border-radius: 5px;
-            }
-        """)
-        layout.addWidget(self.display_text)
+        # Grid Layout for Cards
+        grid_layout = QGridLayout()
+        grid_layout.setSpacing(20)
+        
+        # Set column stretch factors
+        grid_layout.setColumnStretch(0, 30)  # Protocol Distribution
+        grid_layout.setColumnStretch(1, 45)  # Port Distribution
+        grid_layout.setColumnStretch(2, 25)  # Analysis Results
 
-        # Analyze button
+        # Protocol Distribution Card (Smaller)
+        protocol_card = CustomCard("Protocol Distribution")
+        self.protocol_fig = Figure(figsize=(4, 4), dpi=100, facecolor='#FFFFFF')
+        self.protocol_canvas = FigureCanvas(self.protocol_fig)
+        self.protocol_ax = self.protocol_fig.add_subplot(111)
+        protocol_card.layout.addWidget(self.protocol_canvas)
+        grid_layout.addWidget(protocol_card, 0, 0)
+
+        # Port Distribution Card (Same size)
+        port_card = CustomCard("Port Distribution")
+        self.port_fig = Figure(figsize=(6, 4), dpi=100, facecolor='#FFFFFF')
+        self.port_canvas = FigureCanvas(self.port_fig)
+        self.port_ax = self.port_fig.add_subplot(111)
+        port_card.layout.addWidget(self.port_canvas)
+        grid_layout.addWidget(port_card, 0, 1)
+
+        # Status Card (Larger)
+        status_card = CustomCard("Analysis Results")
+        status_card.setMinimumWidth(300)  # Ensure minimum width
+        
+        # Add more spacing in the status card
+        status_card.layout.setSpacing(25)
+        
+        # Anomaly Status with larger font
+        self.anomaly_label = QLabel("No Anomalies Detected")
+        self.anomaly_label.setObjectName("statusLabel")
+        self.anomaly_label.setFont(QFont("Segoe UI", 14))
+        status_card.layout.addWidget(self.anomaly_label)
+
+        # Add spacer for better vertical distribution
+        status_card.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+
+        # Statistics Grid with larger spacing
+        stats_grid = QGridLayout()
+        stats_grid.setSpacing(20)
+        stats_grid.setVerticalSpacing(30)
+
+        # Allowed Packets
+        allowed_label = QLabel("Allowed Packets")
+        allowed_label.setObjectName("statsLabel")
+        self.allowed_count = QLabel("0")
+        self.allowed_count.setObjectName("statsValue")
+        stats_grid.addWidget(allowed_label, 0, 0)
+        stats_grid.addWidget(self.allowed_count, 1, 0)
+
+        # Denied Packets
+        denied_label = QLabel("Denied Packets")
+        denied_label.setObjectName("statsLabel")
+        self.denied_count = QLabel("0")
+        self.denied_count.setObjectName("statsValue")
+        stats_grid.addWidget(denied_label, 0, 1)
+        stats_grid.addWidget(self.denied_count, 1, 1)
+
+        status_card.layout.addLayout(stats_grid)
+        
+        # Add bottom spacer
+        status_card.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+        
+        grid_layout.addWidget(status_card, 0, 2)
+
+        main_layout.addLayout(grid_layout)
+
+        # Buttons Container
+        button_container = QHBoxLayout()
+        button_container.setSpacing(20)
+
+        # Analyze Button
         analyze_btn = QPushButton("Start Analysis")
-        analyze_btn.setStyleSheet(self.get_button_style())
+        analyze_btn.setObjectName("primaryButton")
+        analyze_btn.setFixedHeight(45)
         analyze_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         analyze_btn.clicked.connect(self.analyze_packets)
-        layout.addWidget(analyze_btn)
+        button_container.addWidget(analyze_btn)
 
-        # Back button
-        back_btn = QPushButton("Back")
-        back_btn.setStyleSheet(self.get_button_style())
+        # Back Button
+        back_btn = QPushButton("Back to Main Menu")
+        back_btn.setObjectName("primaryButton")
+        back_btn.setFixedHeight(45)
         back_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         back_btn.clicked.connect(self.go_back)
-        layout.addWidget(back_btn)
+        button_container.addWidget(back_btn)
 
-        # Add spacing
-        layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+        main_layout.addLayout(button_container)
 
-    def get_button_style(self):
-        return """
-            QPushButton {
+    def apply_styles(self):
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #D8C4B6;
+                color: #333333;
+            }
+            
+            #pageHeader {
+                color: #333333;
+                margin-bottom: 20px;
+            }
+            
+            #customCard {
+                background-color: white;
+                border-radius: 10px;
+                border: 1px solid #B4A69C;
+            }
+            
+            #cardTitle {
+                color: #333333;
+                padding-bottom: 10px;
+            }
+            
+            #statusLabel {
+                font-size: 14px;
+            }
+            
+            #statsLabel {
+                color: #666666;
+                font-size: 12px;
+            }
+            
+            #statsValue {
+                color: #333333;
+                font-size: 24px;
+                font-weight: bold;
+            }
+            
+            #primaryButton, #secondaryButton {
                 background-color: #4A4A4A;
                 color: white;
                 border: none;
-                padding: 15px 30px;
+                padding: 12px 30px;
                 border-radius: 5px;
-                font-family: 'Inter';
                 font-size: 14px;
                 font-weight: bold;
             }
-            QPushButton:hover {
+            
+            #primaryButton:hover, #secondaryButton:hover {
                 background-color: #2E2E2E;
             }
-            QPushButton:pressed {
+            
+            #primaryButton:pressed, #secondaryButton:pressed {
                 background-color: #1A1A1A;
             }
-        """
+        """)
+
+    def update_protocol_chart(self, log_entries):
+        protocols = [entry['protocol'] for entry in log_entries]
+        protocol_counts = {}
+        for protocol in protocols:
+            protocol_counts[protocol] = protocol_counts.get(protocol, 0) + 1
+
+        labels = protocol_counts.keys()
+        sizes = protocol_counts.values()
+        colors = ['#B4A69C', '#A18072', '#8B6B5D', '#755C4B', '#5F4D3E']
+
+        self.protocol_ax.clear()
+        patches, texts, autotexts = self.protocol_ax.pie(
+            sizes, 
+            labels=labels, 
+            autopct='%1.1f%%', 
+            startangle=90,
+            colors=colors,
+            textprops={'color': '#333333'}
+        )
+        self.protocol_fig.tight_layout()
+        self.protocol_canvas.draw()
+
+    def update_port_distribution(self, log_entries):
+        ports = [int(entry['port']) for entry in log_entries]
+        port_counts = {}
+        for port in ports:
+            port_counts[port] = port_counts.get(port, 0) + 1
+
+        self.port_ax.clear()
+        bars = self.port_ax.bar(
+            range(len(port_counts)), 
+            port_counts.values(),
+            color='#B4A69C'
+        )
+        self.port_ax.set_xticks(range(len(port_counts)))
+        self.port_ax.set_xticklabels(port_counts.keys(), rotation=45)
+        self.port_ax.set_xlabel('Port Number')
+        self.port_ax.set_ylabel('Number of Packets')
+        
+        # Add value labels on top of bars
+        for bar in bars:
+            height = bar.get_height()
+            self.port_ax.text(
+                bar.get_x() + bar.get_width()/2.,
+                height,
+                f'{int(height)}',
+                ha='center',
+                va='bottom',
+                color='#333333'
+            )
+            
+        self.port_fig.tight_layout()
+        self.port_canvas.draw()
 
     def analyze_packets(self):
-        self.display_text.append("Analyzing packets... (Placeholder for analysis logic)")
+        if self.main_window and hasattr(self.main_window, 'stacked_widget'):
+            log_monitor_page = self.main_window.findChild(LogMonitorPage)
+            if log_monitor_page:
+                log_entries = []
+                for row in range(log_monitor_page.log_table.rowCount()):
+                    log_entry = {
+                        'source_ip': log_monitor_page.log_table.item(row, 1).text(),
+                        'dest_ip': log_monitor_page.log_table.item(row, 2).text(),
+                        'protocol': log_monitor_page.log_table.item(row, 3).text(),
+                        'port': log_monitor_page.log_table.item(row, 4).text(),
+                        'action': log_monitor_page.log_table.item(row, 5).text(),
+                        'status': log_monitor_page.log_table.item(row, 6).text()
+                    }
+                    log_entries.append(log_entry)
+                self.update_dashboard(log_entries)
+
+    def update_dashboard(self, log_entries):
+        self.update_protocol_chart(log_entries)
+        self.update_port_distribution(log_entries)
+        self.detect_anomalies(log_entries)
+        self.update_statistics(log_entries)
+
+    def detect_anomalies(self, log_entries):
+        denied_sources = {}
+        for entry in log_entries:
+            if entry['status'] == "Denied":
+                source_ip = entry['source_ip']
+                denied_sources[source_ip] = denied_sources.get(source_ip, 0) + 1
+
+        anomalous_ip = None
+        max_denied = 0
+        for ip, count in denied_sources.items():
+            if count > max_denied:
+                max_denied = count
+                anomalous_ip = ip
+
+        if anomalous_ip:
+            self.anomaly_label.setText(
+                f"⚠️ Anomaly Detected: High denied packets from {anomalous_ip} ({max_denied} denied)")
+            self.anomaly_label.setStyleSheet("color: #E74C3C;")
+        else:
+            self.anomaly_label.setText("✓ No Anomalies Detected")
+            self.anomaly_label.setStyleSheet("color: #27AE60;")
+
+    def update_statistics(self, log_entries):
+        allowed_count = sum(1 for entry in log_entries if entry['status'] == "Allowed")
+        denied_count = sum(1 for entry in log_entries if entry['status'] == "Denied")
+        
+        self.allowed_count.setText(str(allowed_count))
+        self.denied_count.setText(str(denied_count))
+        
+        # Update colors based on values
+        self.allowed_count.setStyleSheet("color: #27AE60;")
+        self.denied_count.setStyleSheet("color: #E74C3C;")
 
     def go_back(self):
         if self.main_window and hasattr(self.main_window, 'stacked_widget'):
@@ -85,11 +311,10 @@ class AnalysisPage(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setFont(QFont("Inter", 10))
+    app.setFont(QFont("Segoe UI", 10))
     
     window = AnalysisPage()
-    window.setStyleSheet("background-color: #D8C4B6;")
-    window.resize(900, 600)
+    window.resize(1200, 800)
     window.show()
     
     sys.exit(app.exec())

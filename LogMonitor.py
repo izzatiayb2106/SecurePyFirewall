@@ -160,7 +160,7 @@ class LogMonitorPage(QWidget):
     def update_statistics(self):
         total_rows = self.log_table.rowCount()
         allowed_count = sum(1 for row in range(total_rows) 
-                          if self.log_table.item(row, 6).text() == "Allowed")
+            if self.log_table.item(row, 6).text() == "Allowed")
         denied_count = total_rows - allowed_count
         
         self.total_packets_label.setText(f"Total Packets: {total_rows}")

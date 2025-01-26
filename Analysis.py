@@ -258,7 +258,7 @@ class AnalysisPage(QWidget):
         for entry in log_entries:
             if entry['status'] == "Denied":
                 source_ip = entry['source_ip']
-                denied_sources[source_ip] = denied_sources.get(source_ip, 0) + 1
+                denied_sources[source_ip] = denied_sources.get(source_ip, 0) + 4
 
         anomalous_ip = None
         max_denied = 0
